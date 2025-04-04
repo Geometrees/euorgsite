@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>heybro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      background-image: url('https://i.imgur.com/JkNgjTN.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .box {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 30px 50px;
+      margin: 20px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    #title {
+      font-size: 2em;
+      font-weight: 600;
+    }
+
+    #time {
+      font-size: 4em;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px #000;
+    }
+
+    #timezone {
+      font-size: 1em;
+      margin-top: 10px;
+      opacity: 0.8;
+    }
+
+    #weather {
+      font-size: 1.5em;
+      margin-top: 10px;
+    }
+
+    #location {
+      font-size: 1em;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box" id="title">🦆 hey bro pepsi and coke say it's 🦆:</div>
+
+  <div class="box">
+    <div id="time">loading time</div>
+    <div id="timezone">Eastern Time (EST)</div>
+  </div>
+
+  <div class="box" id="weatherBox">
+    <div id="weather">looking at the weather</div>
+    <div id="location"></div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const options = {
+        timeZone: "America/New_York",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      };
+      const timeString = now.toLocaleTimeString("en-US", options);
+      document.getElementById("time").textContent = timeString;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+
+    function getWeather(lat, lon) {
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+        .then(res => res.json())
+        .then(data => {
+          const weather = data.current_weather;
+          document.getElementById("weather").textContent =
+            `🌡️🦆 ${weather.temperature}°C | ${weather.weathercode === 0 ? "🌞Clear" : "☁🌧🌨🌩⛅Cloudy/Other weather"}`;
+        })
+        .catch(() => {
+          document.getElementById("weather").textContent = "could not load weather, quack";
+        });
+    }
+
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toFixed(2);
+          const lon = position.coords.longitude.toFixed(2);
+          document.getElementById("location").textContent = `You are at: ${lat}, ${lon}`;
+          getWeather(lat, lon);
+        },
+        () => {
+          document.getElementById("weather").textContent = "location access denied, quack";
+        }
+      );
+    } else {
+      document.getElementById("weather").textContent = "location not supported, quack";
+    }
+  </script>
+
+</body>
+</html>
