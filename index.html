@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/icon.png" type="image/png" sizes="32x25">
   <title>duck</title>
   <style>
@@ -33,7 +34,21 @@
       border-radius: 20px;
       text-align: center;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      transition: 0.3s;
     }
+
+    .box:hover {
+  transform: scale(1.01);
+  background: rgba(0, 0, 0, 0.5);
+}
+.right-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+    
+
 
     #title {
       font-size: 2em;
@@ -52,11 +67,6 @@
       opacity: 0.8;
     }
 
-    #weather {
-      font-size: 1.5em;
-      margin-top: 10px;
-    }
-
     #location {
       font-size: 1em;
       opacity: 0.9;
@@ -73,10 +83,17 @@
     <div id="timezone">Eastern Time (EST)</div>
   </div>
 
-  <div class="box" id="weatherBox">
-    <div id="weather">looking at the weather</div>
-    <div id="location"></div>
+  <p class="box" id="date" style="font-size: 1.3rem; color: white; text-align: center; margin-top: 10px;"></p>
+</div>
+
+<div class="right-side">
+  <div class="box">
+    <h2>Next holiday:</h2>
+    <p id="nextHolidayName">looking for holidays</p>
+    <p id="holidayCountdown">--</p>
   </div>
+</div>
+</div>
 
   <script>
     function updateTime() {
@@ -93,37 +110,84 @@
     setInterval(updateTime, 1000);
     updateTime();
 
-
-    function getWeather(lat, lon) {
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
-        .then(res => res.json())
-        .then(data => {
-          const weather = data.current_weather;
-          document.getElementById("weather").textContent =
-            `🌡️🦆 ${weather.temperature}°C | ${weather.weathercode === 0 ? "🌞Clear" : "☁🌧🌨🌩⛅Cloudy/Other weather"}`;
-        })
-        .catch(() => {
-          document.getElementById("weather").textContent = "could not load weather, quack";
-        });
-    }
-
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude.toFixed(2);
-          const lon = position.coords.longitude.toFixed(2);
-          document.getElementById("location").textContent = `You are at: ${lat}, ${lon}`;
-          getWeather(lat, lon);
-        },
-        () => {
-          document.getElementById("weather").textContent = "location access denied, quack";
-        }
-      );
-    } else {
-      document.getElementById("weather").textContent = "location not supported, quack";
-    }
   </script>
+
+<script>
+  function updateDate() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    document.getElementById("date").textContent = dateStr;
+  }
+
+  updateDate();
+</script>
+
+<script>
+  const holidays = [
+    { name: "Good Friday", month: 3, day: 18 },  
+    { name: "Easter", month: 3, day: 20 },  
+    { name: "Canada Day", month: 6, day: 1 },
+    { name: "Cinco de Mayo", month: 4, day: 5 },  
+    { name: "Mother's Day", month: 4, day: 11 },  
+    { name: "Father's Day", month: 5, day: 15 },  
+    { name: "Memorial Day", month: 4, day: 26 },  
+    { name: "Halloween", month: 9, day: 31 },
+    { name: "🌹Remembrance Day", month: 10, day: 11 },  
+    { name: "Independence Day", month: 6, day: 4 },  
+    { name: "Christmas", month: 11, day: 25 },
+    { name: "New Year's", month: 0, day: 1 },
+    { name: "Valentine's Day", month: 1, day: 14 },
+    { name: "St. Patrick's Day", month: 2, day: 17 },
+    { name: "April Fools' Day", month: 3, day: 1 },
+    { name: "Thanksgiving", month: 10, day: 27 },  
+    { name: "Black Friday", month: 10, day: 28 },  
+    { name: "Labor Day", month: 8, day: 1 },  
+  ];
+  
+
+  function getNextHoliday() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    
+    for (let i = 0; i < holidays.length; i++) {
+      const h = holidays[i];
+      const holidayDate = new Date(currentYear, h.month, h.day, 0, 0, 0);
+      if (holidayDate > now) return { ...h, year: currentYear };
+    }
+
+    return { ...holidays[0], year: currentYear + 1 };
+  }
+
+  function updateHolidayCountdown() {
+    const now = new Date();
+    const next = getNextHoliday();
+    const holidayDate = new Date(next.year, next.month, next.day, 0, 0, 0);
+    const diff = holidayDate - now;
+
+    if (diff <= 0) {
+      document.getElementById("holidayCountdown").textContent = "today!!!!";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+
+    document.getElementById("nextHolidayName").textContent = `🎈 ${next.name} (${next.year})`;
+    document.getElementById("holidayCountdown").textContent =
+      `${days}d ${hours}h ${mins}m ${secs}s`;
+  }
+
+  setInterval(updateHolidayCountdown, 1000);
+  updateHolidayCountdown();
+</script>
+
 
 </body>
 </html>
